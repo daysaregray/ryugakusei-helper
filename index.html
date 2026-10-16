@@ -592,7 +592,7 @@ function renderFavs(){
       return p?postRow(p):`<div class="phrase"><b>${esc(v.title)}</b><span style="color:var(--muted);font-size:13px">${t.deleted}</span><div class="actions">${star(k,v.title,v.sub)}</div></div>`;
     }).join("")}</div>`}).join("")
     :`<div class="empty">${t.favEmpty}</div>`;
-  return `<section class="view"><div><h2 style="font-size:22px">${t.favH}</h2><p class="lede">${S.live&&S.uid?t.favAcct:t.favLocal}</p></div>${body}</section>`;
+  return `<section class="view"><div><h2 style="font-size:22px">${t.favH}</h2><p class="lede">${S.live&&S.uid&&S.backend!=="firebase"?t.favAcct:t.favLocal}</p></div>${body}</section>`;
 }
 function render(){
   applyChrome();
@@ -704,26 +704,58 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#showbig").hidden
 const h=(location.hash||"").slice(1);if(["home","info","phrases","community","favorites"].includes(h))S.view=h;
 render();
 
-(async()=>{
-  if(!window.claude||!window.claude.use)return;
-  const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
-  if(!db)return;
+/* ---------- Firebase 설정 (Firebase setup) ----------
+   Firebase 콘솔 > 프로젝트 설정 > 내 앱 에서 복사한 값을 붙여넣으세요.
+   비워 두면 게시판이 미리보기 모드로 동작합니다. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBwXr08IQOenBFnDBhcTs1QQPUFZh73H-U",
+  authDomain: "ryugakusei-helper.firebaseapp.com",
+  projectId: "ryugakusei-helper",
+  storageBucket: "ryugakusei-helper.firebasestorage.app",
+  messagingSenderId: "896224878620",
+  appId: "1:896224878620:web:f531c846f31dd70fddbfd9",
+  measurementId: "G-B8KK4EG0TT"
+};
+
+async function startLive(db){
   S.db=db;S.live=true;S.posts=[];
-  if(user){
-    try{S.uid=await user.id()}catch(e){}
-    try{const w=await user.can("data.write");if(w===false)S.canWrite=false}catch(e){}
-  }
   db.collection("posts").orderBy("createdAt","desc").limit(300).onSnapshot(
     snap=>{S.posts=snap.docs.map(d=>({id:d.id,...d.data()}));if(document.activeElement&&/^(c-|r-|q|pq)/.test(document.activeElement.id))return;render()},
-    ()=>{});
+    err=>{console.error(err)});
   if(S.uid){
     favRef=db.doc("data/users/"+S.uid+"/favorites");
     try{const snap=await favRef.get();
       if(snap.exists){S.favs={...(snap.data().items||{})};ls.set("yh.favs",S.favs)}
       else if(Object.keys(S.favs).length){saveFavs()}
-    }catch(e){}
+    }catch(e){console.error(e)}
   }
   render();
+}
+function loadScript(src){return new Promise((ok,no)=>{const el=document.createElement("script");el.src=src;el.onload=ok;el.onerror=no;document.head.appendChild(el)})}
+
+(async()=>{
+  // 1) Firebase
+  if(FIREBASE_CONFIG.apiKey&&FIREBASE_CONFIG.projectId){
+    try{
+      const v="10.12.2",base="https://www.gstatic.com/firebasejs/"+v+"/";
+      await loadScript(base+"firebase-app-compat.js");
+      await Promise.all([loadScript(base+"firebase-auth-compat.js"),loadScript(base+"firebase-firestore-compat.js")]);
+      firebase.initializeApp(FIREBASE_CONFIG);
+      const cred=await firebase.auth().signInAnonymously();
+      S.uid=cred.user.uid;S.backend="firebase";
+      await startLive(firebase.firestore());
+    }catch(e){console.error("Firebase 연결 실패:",e);S.live=false;S.posts=SAMPLE_POSTS.slice();render()}
+    return;
+  }
+  // 2) claude.ai artifact
+  if(!window.claude||!window.claude.use)return;
+  const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
+  if(!db)return;
+  if(user){
+    try{S.uid=await user.id()}catch(e){}
+    try{const w=await user.can("data.write");if(w===false)S.canWrite=false}catch(e){}
+  }
+  await startLive(db);
 })();
 </script>
 
