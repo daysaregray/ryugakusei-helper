@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>유학생 도우미</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Zen+Maru+Gothic:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow app column; sticky header with scrollable tabs; Japanese text always set in a rounded face so it reads as "the phrase you show someone". */
+:root{
+  --bg:#F2F4F8; --surface:#FFFFFF; --ink:#172033; --muted:#5B6578; --line:#DBE0EA;
+  --accent:#26448A; --accent-ink:#FFFFFF; --accent-soft:#E2E8F5; --sun:#B97A0C; --sun-soft:#FBF1DC; --danger:#B4372F;
+  --f-ui:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-ja:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F131B; --surface:#171D29; --ink:#E6EAF2; --muted:#9AA3B6; --line:#283043;
+  --accent:#93AEEB; --accent-ink:#0F1730; --accent-soft:#1E2942; --sun:#E3B24E; --sun-soft:#2C2416; --danger:#EF8A80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F131B; --surface:#171D29; --ink:#E6EAF2; --muted:#9AA3B6; --line:#283043;
+  --accent:#93AEEB; --accent-ink:#0F1730; --accent-soft:#1E2942; --sun:#E3B24E; --sun-soft:#2C2416; --danger:#EF8A80; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}
+.ja{font-family:var(--f-ja);font-weight:500}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.3}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:baseline;gap:10px;padding-block:14px 6px}
+.brand h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.brand .ja{font-size:13px;color:var(--muted)}
+.lang{margin-left:auto;align-self:center;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.lang:hover{border-color:var(--accent)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin:0 -4px}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex:none;border:0;background:none;padding:10px 12px 12px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+
+main{padding-block:20px 64px}
+section.view{display:flex;flex-direction:column;gap:20px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.lede{color:var(--muted);margin:4px 0 0;max-width:62ch}
+
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:4px 6px 4px 16px}
+.search:focus-within{border-color:var(--accent)}
+.search input{flex:1;min-width:0;border:0;background:none;padding:8px 0;outline:none;font-size:16px}
+.search button{border:0;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:8px 16px;font-weight:600;cursor:pointer}
+.hints{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer;color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+.cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:620px){.cats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.cat{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:14px;cursor:pointer}
+.cat:hover{border-color:var(--accent)}
+.cat b{font-size:15px}
+.cat .ja{font-size:12px;color:var(--muted)}
+.cat small{color:var(--muted);font-size:12px;margin-top:4px}
+
+/* garbage day panel */
+.today{background:var(--sun-soft);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px}
+.today h3{font-size:16px}
+.today .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.today .tag{background:var(--surface);border-radius:999px;padding:3px 12px;font-size:14px;font-weight:600;color:var(--sun)}
+.today .none{color:var(--muted);font-size:14px}
+.linkbtn{border:0;background:none;color:var(--accent);padding:0;cursor:pointer;font-weight:500;text-decoration:underline;text-underline-offset:3px}
+.sched{overflow-x:auto}
+.sched table{border-collapse:collapse;width:100%;min-width:420px;font-size:14px}
+.sched th,.sched td{padding:6px 4px;text-align:center;border-bottom:1px solid var(--line)}
+.sched th:first-child,.sched td:first-child{text-align:left;padding-left:0}
+.sched input{width:18px;height:18px;accent-color:var(--sun)}
+
+/* info cards */
+.list{display:flex;flex-direction:column;gap:10px}
+details.info{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+details.info>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+details.info>summary::-webkit-details-marker{display:none}
+.sumtext{flex:1;min-width:0}
+.sumtext h3{font-size:16px;font-weight:600}
+.sumtext p{margin:2px 0 0;color:var(--muted);font-size:14px}
+.catlabel{font-size:12px;color:var(--accent);font-weight:600}
+.body{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
+.body ol,.body ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.terms{display:flex;flex-wrap:wrap;gap:6px}
+.term{background:var(--accent-soft);border-radius:8px;padding:4px 10px;font-size:13px}
+.term .ja{font-size:14px}
+.src{font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px}
+.star{flex:none;border:0;background:none;cursor:pointer;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.star:hover{background:var(--accent-soft)}
+.star[aria-pressed="true"]{color:var(--sun)}
+.star svg{width:20px;height:20px}
+
+/* phrases */
+.phrase{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.phrase .ja.big{font-size:19px;line-height:1.5;font-weight:700}
+.phrase .kana{font-family:var(--f-ja);font-size:13px;color:var(--muted)}
+.phrase .ko{font-size:14px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:500;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.danger{color:var(--danger)}
+.actions .star{margin-left:auto}
+.showbig{position:fixed;inset:0;z-index:20;background:var(--surface);display:flex;flex-direction:column;justify-content:center;gap:20px;padding:calc(24px + env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px))}
+.showbig .ja{font-size:clamp(28px,7vw,48px);font-weight:700;line-height:1.45}
+.showbig p{color:var(--muted);margin:0}
+
+/* community */
+.notice{font-size:13px;color:var(--muted);background:var(--accent-soft);border-radius:10px;padding:10px 14px}
+.post{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;gap:12px;cursor:pointer;text-align:left;width:100%}
+.post:hover{border-color:var(--accent)}
+.post h3{font-size:16px;font-weight:600}
+.post p{margin:2px 0 0;color:var(--muted);font-size:14px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.meta{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.badge{font-size:11px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:0 6px}
+form.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}
+label.f input,label.f select,label.f textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 12px;font-weight:400;font-size:15px}
+label.f textarea{min-height:110px;resize:vertical}
+.frow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(max-width:480px){.frow{grid-template-columns:1fr}}
+.err{color:var(--danger);font-size:13px;margin:0}
+.thread{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 16px;display:flex;flex-direction:column;gap:10px}
+.thread h2{font-size:20px}
+.thread .text{white-space:pre-wrap;overflow-wrap:anywhere}
+.comment{border-top:1px solid var(--line);padding-top:10px}
+.comment .text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
+.empty{color:var(--muted);text-align:center;padding:28px 12px;background:var(--surface);border:1px dashed var(--line);border-radius:var(--r)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;z-index:30;pointer-events:none}
+h2.sec{font-size:17px;font-weight:700}
+.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+@media (prefers-reduced-motion:no-preference){.post,.cat,details.info{transition:border-color .15s}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><h1>유학생 도우미</h1><span class="ja" lang="ja">留学生サポート</span><button class="lang" id="langBtn" type="button">English</button></div>
+    <nav class="tabs" id="tabs" aria-label="메뉴">
+      <button data-v="home">홈</button>
+      <button data-v="info">생활 정보</button>
+      <button data-v="phrases">일본어 표현</button>
+      <button data-v="community">커뮤니티</button>
+      <button data-v="favorites">즐겨찾기</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="main"></main>
+<div class="toast" id="toast" hidden></div>
+<div class="showbig" id="showbig" hidden></div>
+
+<script>
+/* ---------- content ---------- */
+const UPDATED = "2026-10-16";
+const CATS = {
+  garbage:{ko:"쓰레기",ja:"ごみ",desc:"분리수거 · 배출 요일"},
+  office:{ko:"구청·시청",ja:"役所",desc:"전입신고 · 보험 · 연금"},
+  medical:{ko:"병원·약국",ja:"病院・薬局",desc:"진료 순서 · 처방"},
+  utility:{ko:"전기·수도·인터넷",ja:"ライフライン",desc:"입주 전 신청"},
+};
+const OFFICIAL = {
+  city:"거주하는 시·구청 홈페이지와 창구 안내",
+  isa:'<a href="https://www.isa.go.jp/" target="_blank" rel="noopener">출입국재류관리청 (isa.go.jp)</a>',
+  nenkin:'<a href="https://www.nenkin.go.jp/" target="_blank" rel="noopener">일본연금기구 (nenkin.go.jp)</a>',
+  mhlw:'<a href="https://www.mhlw.go.jp/" target="_blank" rel="noopener">후생노동성 (mhlw.go.jp)</a>',
+  digital:'<a href="https://www.digital.go.jp/" target="_blank" rel="noopener">디지털청 (digital.go.jp)</a>',
+};
+const INFO = [
+ {id:"g1",cat:"garbage",title:"쓰레기 분리수거 기본",sum:"일본의 주요 분류와 버리는 방법",
+  steps:["<b>타는 쓰레기</b>(燃えるごみ): 음식물, 휴지, 더러워진 종이 등. 보통 주 2회.",
+         "<b>안 타는 쓰레기</b>(燃えないごみ): 깨진 유리, 도자기, 작은 금속 등. 월 1~2회인 곳이 많아요.",
+         "<b>자원 쓰레기</b>(資源ごみ): 캔·병·페트병·종이. 페트병은 뚜껑과 라벨을 떼고 헹궈서 내놓아요.",
+         "많은 지역이 <b>지정 쓰레기봉투</b>(指定ごみ袋)를 써요. 마트·편의점에서 팔아요.",
+         "배출일 <b>당일 아침, 정해진 시간까지</b> 집 근처 수거장소(ごみステーション)에 내놓아요. 전날 밤에 내놓지 마세요."],
+  terms:[["燃えるごみ","타는 쓰레기"],["燃えないごみ","안 타는 쓰레기"],["資源ごみ","자원 쓰레기"],["ペットボトル","페트병"],["指定ごみ袋","지정 봉투"]],
+  tip:"분류 기준과 요일은 지역마다 달라요. 시청 홈페이지의 「ごみカレンダー」나 지자체 분리수거 앱, 아파트 게시판에서 꼭 확인하세요.",
+  src:"city",tags:"쓰레기 분리수거 분리 배출 요일 페트병 캔 병 종이 봉투 ごみ ゴミ 분리배출"},
+ {id:"g2",cat:"garbage",title:"큰 쓰레기(가구·자전거) 버리기",sum:"粗大ごみ는 미리 신청해야 해요",
+  steps:["시청의 粗大ごみ 접수센터에 전화나 인터넷으로 신청해요.","안내받은 금액의 <b>처리권(粗大ごみ処理券)</b>을 편의점이나 마트에서 사요.","처리권에 이름이나 접수번호를 적어 물건에 붙여요.","지정된 날 아침, 지정된 장소에 내놓아요."],
+  terms:[["粗大ごみ","대형 쓰레기"],["処理券","처리권"]],
+  tip:"에어컨·TV·냉장고·세탁기는 가전 리사이클 대상이라 粗大ごみ로 버릴 수 없어요. 구입한 가게나 시청에 문의하세요.",
+  src:"city",tags:"큰 쓰레기 대형 가구 자전거 침대 粗大ごみ 처리권 이사 귀국"},
+ {id:"o1",cat:"office",title:"전입신고와 재류카드 주소 등록",sum:"이사 후 14일 이내, 시청·구청에서",
+  steps:["새 주소에 살기 시작한 날부터 <b>14일 이내</b>에 시청·구청에 가요.","<b>전입신고</b>(転入届)를 하면 재류카드 뒷면에 새 주소가 기재돼요. 이게 재류카드 주소 변경이에요.","같은 시 안에서 이사했다면 転居届, 다른 시로 이사했다면 먼저 전 주소의 시청에서 転出届를 내요.","가능하면 같은 날 국민건강보험 가입도 함께 해요."],
+  bring:["재류카드(在留カード)","여권","転出証明書 (다른 시에서 이사 온 경우)"],
+  terms:[["転入届","전입신고"],["在留カード","재류카드"],["住民票","주민표"],["転出届","전출신고"]],
+  tip:"재류카드 주소 변경은 출입국재류관리국이 아니라 시청·구청 창구에서 해요.",
+  src:"isa",tags:"전입신고 재류카드 주소 변경 이사 시청 구청 주민표 転入届 在留カード 住民票"},
+ {id:"o2",cat:"office",title:"국민건강보험 가입",sum:"유학생도 가입 의무, 병원비 본인 부담 30%",
+  steps:["전입신고 때 같은 창구 또는 보험 창구에서 가입해요.","가입하면 병원비의 30%만 내면 돼요.","보험료는 지역과 전년도 소득에 따라 달라요. 소득이 적은 유학생은 감액되는 경우가 많아요.","보험료는 납부서로 편의점에서 내거나 계좌이체로 내요."],
+  bring:["재류카드","여권"],
+  terms:[["国民健康保険","국민건강보험"],["保険料","보험료"],["納付書","납부서"]],
+  tip:"보험료를 밀리면 비자 갱신 때 불리할 수 있어요. 귀국할 때는 탈퇴 신고도 잊지 마세요.",
+  src:"mhlw",tags:"국민건강보험 보험 가입 병원비 보험료 국보 国民健康保険"},
+ {id:"o3",cat:"office",title:"국민연금 학생납부특례",sum:"20세 이상 학생은 신청하면 납부 유예",
+  steps:["일본에 사는 20세 이상은 국민연금 가입 대상이에요.","학생은 <b>학생납부특례</b>(学生納付特例)를 신청하면 재학 중 보험료 납부가 유예돼요.","시청 연금 창구에서 신청하고, 매년 다시 신청해요."],
+  bring:["재류카드","학생증 또는 재학증명서","연금 관련 우편물(기초연금번호)"],
+  terms:[["国民年金","국민연금"],["学生納付特例","학생납부특례"],["在学証明書","재학증명서"]],
+  tip:"신청하지 않고 그냥 두면 미납이 돼요. 연금 우편물이 오면 미루지 말고 신청하세요.",
+  src:"nenkin",tags:"국민연금 연금 학생납부특례 납부 유예 年金"},
+ {id:"o4",cat:"office",title:"마이넘버와 마이넘버 카드",sum:"주민등록 후 번호가 부여돼요",
+  steps:["전입신고 후 개인 번호(マイナンバー)가 부여돼요.","원하면 사진이 들어간 마이넘버 카드를 신청할 수 있어요. 발급까지 보통 한 달 정도 걸려요.","카드를 건강보험증으로 등록하면 병원에서 마이나 보험증으로 쓸 수 있어요."],
+  terms:[["マイナンバーカード","마이넘버 카드"],["暗証番号","비밀번호"]],
+  tip:"아르바이트를 시작할 때 마이넘버를 요구받는 경우가 많아요.",
+  src:"digital",tags:"마이넘버 카드 개인번호 マイナンバー 아르바이트 보험증"},
+ {id:"o5",cat:"office",title:"귀국하거나 다른 도시로 이사할 때",sum:"전출신고와 보험·연금 정리",
+  steps:["시청에 <b>전출신고</b>(転出届)를 해요. 출국 예정일 약 2주 전부터 할 수 있어요.","국민건강보험 탈퇴와 남은 보험료를 정리해요.","전기·가스·수도·인터넷 해지를 미리 신청해요.","粗大ごみ는 수거일이 정해져 있으니 일찍 신청해요."],
+  terms:[["転出届","전출신고"],["解約","해지"]],
+  tip:"귀국할 때 공항에서 재류카드를 반납해요.",
+  src:"city",tags:"귀국 이사 전출신고 해지 転出届 출국"},
+ {id:"m1",cat:"medical",title:"병원 이용 순서",sum:"접수부터 계산까지",
+  steps:["<b>접수</b>(受付): 처음이라고 말하고 보험증을 보여줘요.","<b>문진표</b>(問診票)를 작성해요. 증상, 언제부터, 알레르기 등을 적어요.","이름이 불리면 진료를 받아요.","<b>계산</b>(会計)하고 처방전(処方箋)을 받아요."],
+  bring:["마이나 보험증 또는 資格確認書","현금(카드가 안 되는 병원도 있어요)","복용 중인 약이나 お薬手帳"],
+  terms:[["受付","접수"],["問診票","문진표"],["初診","초진"],["会計","계산"],["内科","내과"],["耳鼻科","이비인후과"]],
+  tip:"큰 병원은 소개장(紹介状) 없이 가면 추가 비용이 들어요. 감기 같은 가벼운 증상은 동네 의원(クリニック)부터 가세요.",
+  src:"mhlw",tags:"병원 진료 접수 문진표 보험증 내과 감기 열 아플 때 病院 クリニック"},
+ {id:"m2",cat:"medical",title:"약국에서 약 받기",sum:"처방전은 발행일 포함 4일 이내에",
+  steps:["병원에서 받은 <b>처방전</b>(処方箋)을 약국에 내요.","약 기록 수첩 <b>お薬手帳</b>이 있으면 같이 내요. 없으면 새로 만들어 줘요.","약사가 먹는 방법을 설명해 줘요. 모르면 다시 물어봐도 돼요."],
+  terms:[["処方箋","처방전"],["お薬手帳","약 수첩"],["食後","식후"],["一日三回","하루 세 번"],["ジェネリック","복제약"]],
+  tip:"처방전은 발행일을 포함해 4일 이내에 약국에 내야 해요.",
+  src:"mhlw",tags:"약국 약 처방전 薬局 処方箋 お薬手帳 감기약"},
+ {id:"m3",cat:"medical",title:"긴급할 때 전화번호",sum:"구급차 119, 경찰 110",
+  steps:["<b>119</b>: 구급차·화재. 「救急です」라고 말하고 주소를 알려요.","<b>110</b>: 경찰. 사고나 도난이 있을 때.","밤이나 휴일에 문을 연 병원은 시청 홈페이지의 휴일 당번의(休日当番医) 안내에서 찾아요."],
+  terms:[["救急車","구급차"],["火事","화재"],["休日当番医","휴일 당번 병원"]],
+  tip:"집 주소를 일본어로 적어 휴대폰 메모에 저장해 두면 급할 때 바로 읽을 수 있어요.",
+  src:"city",tags:"긴급 응급 구급차 119 110 경찰 화재 救急車"},
+ {id:"u1",cat:"utility",title:"전기 사용 신청",sum:"입주 전에 인터넷으로 신청",
+  steps:["집에 붙어 있는 안내문이나 관리회사에 어느 전력회사인지 확인해요.","전력회사 홈페이지에서 사용 개시(使用開始)를 신청해요. 입주 며칠 전에 하면 좋아요.","입주 후 분전반 차단기(ブレーカー)를 올려요."],
+  terms:[["使用開始","사용 개시"],["ブレーカー","차단기"],["お客さま番号","고객 번호"]],
+  tip:"전력 자유화로 회사를 고를 수 있지만, 처음에는 지역 전력회사로 시작하는 게 간단해요.",
+  src:"city",tags:"전기 신청 전력 차단기 電気 입주 이사"},
+ {id:"u2",cat:"utility",title:"가스 개통",sum:"입회가 필요해서 예약해야 해요",
+  steps:["관리회사에 가스 회사를 확인하고 전화나 인터넷으로 개통(開栓)을 신청해요.","가스는 안전 확인을 위해 <b>본인 입회</b>(立ち会い)가 필요해요. 집에 있을 시간을 예약해요.","도시가스와 LP가스(プロパン)는 요금 체계가 달라요."],
+  terms:[["開栓","개통"],["立ち会い","입회"],["都市ガス","도시가스"],["プロパンガス","LP가스"]],
+  tip:"이사 시즌(3~4월)에는 예약이 밀리니 일찍 신청하세요.",
+  src:"city",tags:"가스 개통 입회 開栓 プロパン 샤워 온수"},
+ {id:"u3",cat:"utility",title:"수도 사용 신청",sum:"시의 수도국에 연락",
+  steps:["시의 수도국(水道局) 홈페이지나 전화로 사용 개시를 신청해요.","대부분 입회 없이 바로 쓸 수 있어요.","요금은 보통 2개월에 한 번 청구돼요."],
+  terms:[["水道局","수도국"],["水道料金","수도 요금"]],
+  tip:"집 안 수도 계량기 근처에 신청 엽서가 놓여 있는 경우도 있어요.",
+  src:"city",tags:"수도 물 水道 신청"},
+ {id:"u4",cat:"utility",title:"인터넷과 휴대폰",sum:"광회선 공사는 몇 주 걸려요",
+  steps:["건물에 이미 인터넷이 설치돼 있는지 관리회사에 먼저 물어봐요.","광회선(光回線)은 신청부터 공사까지 2주~1개월 이상 걸릴 수 있어요.","기다리는 동안 포켓 와이파이나 공사 없는 홈 라우터를 쓸 수 있어요.","휴대폰 개통에는 재류카드와 본인 명의의 결제 수단이 필요해요."],
+  terms:[["光回線","광회선"],["工事","공사"],["ポケットWi-Fi","포켓 와이파이"],["契約期間","약정 기간"]],
+  tip:"유학 기간보다 긴 약정이면 해지 위약금이 생길 수 있어요. 약정 기간을 꼭 확인하세요.",
+  src:"city",tags:"인터넷 와이파이 휴대폰 핸드폰 광회선 공사 통신 ネット Wi-Fi"},
+];
+const PHRASE_SETS = [
+ {id:"hos",ko:"병원",items:[
+  ["初めて来ました。受付はどこですか？","はじめてきました。うけつけはどこですか？","처음 왔습니다. 접수는 어디인가요?"],
+  ["予約していないのですが、診てもらえますか？","よやくしていないのですが、みてもらえますか？","예약은 안 했는데 진료받을 수 있나요?"],
+  ["三日前から熱があります。","みっかまえからねつがあります。","3일 전부터 열이 있어요."],
+  ["喉が痛くて、咳が出ます。","のどがいたくて、せきがでます。","목이 아프고 기침이 나요."],
+  ["お腹が痛いです。","おなかがいたいです。","배가 아파요."],
+  ["頭痛がします。","ずつうがします。","두통이 있어요."],
+  ["薬のアレルギーがあります。","くすりのアレルギーがあります。","약 알레르기가 있어요."],
+  ["日本語があまり話せません。ゆっくり話していただけますか？","にほんごがあまりはなせません。ゆっくりはなしていただけますか？","일본어를 잘 못해요. 천천히 말씀해 주시겠어요?"],
+  ["診断書をお願いできますか？","しんだんしょをおねがいできますか？","진단서를 받을 수 있을까요?"]]},
+ {id:"pha",ko:"약국",items:[
+  ["処方箋です。お願いします。","しょほうせんです。おねがいします。","처방전이에요. 부탁드립니다."],
+  ["ジェネリック医薬品でお願いします。","ジェネリックいやくひんでおねがいします。","복제약(제네릭)으로 부탁드려요."],
+  ["お薬手帳は持っていません。","おくすりてちょうはもっていません。","약 수첩은 없어요."],
+  ["一日に何回飲めばいいですか？","いちにちになんかいのめばいいですか？","하루에 몇 번 먹으면 되나요?"],
+  ["この薬を飲むと眠くなりますか？","このくすりをのむとねむくなりますか？","이 약을 먹으면 졸린가요?"],
+  ["風邪薬はどこにありますか？","かぜぐすりはどこにありますか？","감기약은 어디에 있나요?"]]},
+ {id:"off",ko:"시청·구청",items:[
+  ["転入届を出したいです。","てんにゅうとどけをだしたいです。","전입신고를 하고 싶어요."],
+  ["在留カードの住所を変更したいです。","ざいりゅうカードのじゅうしょをへんこうしたいです。","재류카드 주소를 변경하고 싶어요."],
+  ["国民健康保険に加入したいです。","こくみんけんこうほけんにかにゅうしたいです。","국민건강보험에 가입하고 싶어요."],
+  ["国民年金の学生納付特例を申請したいです。","こくみんねんきんのがくせいのうふとくれいをしんせいしたいです。","국민연금 학생납부특례를 신청하고 싶어요."],
+  ["住民票を一通お願いします。","じゅうみんひょうをいっつうおねがいします。","주민표 한 통 부탁드려요."],
+  ["この書類の書き方を教えてください。","このしょるいのかきかたをおしえてください。","이 서류 쓰는 법을 알려 주세요."]]},
+ {id:"gar",ko:"쓰레기·이웃",items:[
+  ["ごみの出し方を教えてください。","ごみのだしかたをおしえてください。","쓰레기 버리는 법을 알려 주세요."],
+  ["燃えるごみは何曜日ですか？","もえるごみはなんようびですか？","타는 쓰레기는 무슨 요일인가요?"],
+  ["粗大ごみを出したいのですが、どうすればいいですか？","そだいごみをだしたいのですが、どうすればいいですか？","큰 쓰레기를 버리고 싶은데 어떻게 하면 되나요?"],
+  ["夜遅くにうるさくしてしまい、すみませんでした。","よるおそくにうるさくしてしまい、すみませんでした。","밤늦게 시끄럽게 해서 죄송했습니다."]]},
+ {id:"uti",ko:"전기·가스·인터넷",items:[
+  ["電気の使用開始を申し込みたいです。","でんきのしようかいしをもうしこみたいです。","전기 사용 개시를 신청하고 싶어요."],
+  ["ガスの開栓の立ち会いを予約したいです。","ガスのかいせんのたちあいをよやくしたいです。","가스 개통 입회를 예약하고 싶어요."],
+  ["インターネットの工事はいつできますか？","インターネットのこうじはいつできますか？","인터넷 공사는 언제 가능한가요?"],
+  ["留学生ですが、契約できますか？","りゅうがくせいですが、けいやくできますか？","유학생인데 계약할 수 있나요?"]]},
+ {id:"emg",ko:"긴급",items:[
+  ["救急です。住所は〇〇です。","きゅうきゅうです。じゅうしょは〇〇です。","구급이에요. 주소는 ○○입니다. (119)"],
+  ["助けてください！","たすけてください！","도와주세요!"],
+  ["財布をなくしました。","さいふをなくしました。","지갑을 잃어버렸어요."],
+  ["道に迷いました。","みちにまよいました。","길을 잃었어요."]]},
+];
+const PHRASES = PHRASE_SETS.flatMap(s=>s.items.map((p,i)=>({id:s.id+i,set:s.id,setKo:s.ko,ja:p[0],kana:p[1],ko:p[2]})));
+const POST_CATS = ["쓰레기","구청·행정","병원·약국","생활용품·쇼핑","집·통신","기타"];
+const SAMPLE_POSTS = [
+ {id:"ex1",title:"이 지역에서는 페트병을 무슨 요일에 버리나요?",body:"이번 주에 이사 왔는데 아파트 게시판에 요일표가 없어요. 페트병은 뚜껑이랑 라벨도 따로 버려야 하나요?",category:"쓰레기",nickname:"예시",authorId:"seed",createdAt:Date.now()-86400000*2,example:true},
+ {id:"ex2",title:"재류카드 주소 변경은 어디에서 해야 하나요?",body:"학교 근처로 이사했어요. 출입국관리국에 가야 하는지 시청에 가야 하는지 헷갈려요.",category:"구청·행정",nickname:"예시",authorId:"seed",createdAt:Date.now()-86400000,example:true},
+ {id:"ex3",title:"저렴한 생활용품은 어디에서 살 수 있나요?",body:"자취 시작하면서 수건, 식기, 수납용품이 필요해요. 학생이 많이 가는 곳 추천해 주세요.",category:"생활용품·쇼핑",nickname:"예시",authorId:"seed",createdAt:Date.now()-3600000*5,example:true},
+];
+/* ---------- English overlay ---------- */
+const CATS_EN = {garbage:["Garbage","Sorting · collection days"],office:["City hall","Registration · insurance · pension"],medical:["Clinic & pharmacy","Visit steps · prescriptions"],utility:["Utilities & internet","Set up before moving in"]};
+const OFFICIAL_EN = {
+  city:"your city or ward office website and counter",
+  isa:'<a href="https://www.isa.go.jp/en/" target="_blank" rel="noopener">Immigration Services Agency (isa.go.jp)</a>',
+  nenkin:'<a href="https://www.nenkin.go.jp/international/" target="_blank" rel="noopener">Japan Pension Service (nenkin.go.jp)</a>',
+  mhlw:'<a href="https://www.mhlw.go.jp/english/" target="_blank" rel="noopener">Ministry of Health, Labour and Welfare (mhlw.go.jp)</a>',
+  digital:'<a href="https://www.digital.go.jp/en/" target="_blank" rel="noopener">Digital Agency (digital.go.jp)</a>',
+};
+const INFO_EN = {
+ g1:{title:"Garbage sorting basics",sum:"Main categories in Japan and how to put them out",
+  steps:["<b>Burnable</b> (燃えるごみ): food waste, tissues, dirty paper. Usually twice a week.","<b>Non-burnable</b> (燃えないごみ): broken glass, ceramics, small metal items. Often once or twice a month.","<b>Recyclables</b> (資源ごみ): cans, bottles, PET bottles, paper. Remove caps and labels from PET bottles and rinse them.","Many areas require <b>designated garbage bags</b> (指定ごみ袋), sold at supermarkets and convenience stores.","Put garbage at your collection point (ごみステーション) <b>on the morning of collection, by the set time</b>. Don't put it out the night before."],
+  terms:["burnable","non-burnable","recyclables","PET bottle","designated bag"],
+  tip:"Rules and days differ by area. Check your city's 「ごみカレンダー」 (garbage calendar), the city's sorting app, or your building's notice board."},
+ g2:{title:"Throwing away large items",sum:"Oversized garbage (粗大ごみ) needs a reservation",
+  steps:["Apply to the city's 粗大ごみ reception by phone or online.","Buy a <b>disposal ticket</b> (粗大ごみ処理券) for the stated fee at a convenience store or supermarket.","Write your name or reception number on the ticket and attach it to the item.","Put it out on the assigned morning at the assigned place."],
+  terms:["oversized garbage","disposal ticket"],
+  tip:"Air conditioners, TVs, fridges and washing machines fall under appliance recycling and can't go out as 粗大ごみ. Ask the store you bought them from or the city office."},
+ o1:{title:"Resident registration and residence card address",sum:"Within 14 days of moving, at the city or ward office",
+  steps:["Go to the city or ward office <b>within 14 days</b> of starting to live at the new address.","File a <b>moving-in notice</b> (転入届). The new address is written on the back of your residence card. This is the residence card address change.","Moving within the same city uses 転居届. Moving from another city, first file 転出届 at your old city office.","If you can, join National Health Insurance the same day."],
+  bring:["Residence card (在留カード)","Passport","Moving-out certificate (転出証明書), if you moved from another city"],
+  terms:["moving-in notice","residence card","certificate of residence","moving-out notice"],
+  tip:"You change your residence card address at the city or ward office, not at the immigration bureau."},
+ o2:{title:"Joining National Health Insurance",sum:"Required for students; you pay 30% of medical costs",
+  steps:["Enroll at the same counter as your moving-in notice, or at the insurance counter.","Once enrolled, you pay only 30% of medical bills.","Premiums depend on your area and last year's income. Students with low income often get a reduction.","Pay with the payment slip at a convenience store, or by bank transfer."],
+  bring:["Residence card","Passport"],
+  terms:["National Health Insurance","premium","payment slip"],
+  tip:"Unpaid premiums can count against you when renewing your visa. When you leave Japan, remember to cancel your enrollment."},
+ o3:{title:"National Pension student deferral",sum:"Students aged 20+ can defer payments by applying",
+  steps:["Everyone aged 20 or older living in Japan is covered by the National Pension.","Students can apply for the <b>Student Payment Special Exemption</b> (学生納付特例) to defer premiums while enrolled.","Apply at the pension counter of your city office, and reapply every year."],
+  bring:["Residence card","Student ID or certificate of enrollment","Pension mail (basic pension number)"],
+  terms:["National Pension","student deferral","certificate of enrollment"],
+  tip:"If you ignore it, the premiums count as unpaid. Apply as soon as pension mail arrives."},
+ o4:{title:"My Number and the My Number Card",sum:"You get a number after registering your address",
+  steps:["After your moving-in notice, you are assigned a personal number (マイナンバー).","If you want, you can apply for the photo My Number Card. It usually takes about a month.","Registered as your health insurance card, it works as a マイナ保険証 at clinics."],
+  terms:["My Number Card","PIN"],
+  tip:"Part-time employers often ask for your My Number."},
+ o5:{title:"Leaving Japan or moving to another city",sum:"Moving-out notice, insurance and pension",
+  steps:["File a <b>moving-out notice</b> (転出届) at the city office. You can do this from about two weeks before you leave.","Cancel National Health Insurance and settle remaining premiums.","Cancel electricity, gas, water and internet in advance.","Oversized garbage has fixed pickup days, so book early."],
+  terms:["moving-out notice","cancellation"],
+  tip:"When leaving Japan for good, you return your residence card at the airport."},
+ m1:{title:"How a clinic visit works",sum:"From reception to payment",
+  steps:["<b>Reception</b> (受付): say it's your first visit and show your insurance card.","Fill out the <b>medical questionnaire</b> (問診票): symptoms, since when, allergies.","See the doctor when your name is called.","<b>Pay</b> (会計) and receive your prescription (処方箋)."],
+  bring:["マイナ保険証 or 資格確認書 (insurance proof)","Cash (some clinics don't take cards)","Medicines you take, or your お薬手帳"],
+  terms:["reception","questionnaire","first visit","payment","internal medicine","ENT"],
+  tip:"Large hospitals charge extra without a referral letter (紹介状). For a cold or other mild symptoms, start at a local clinic (クリニック)."},
+ m2:{title:"Getting medicine at a pharmacy",sum:"Use a prescription within 4 days, including the issue date",
+  steps:["Hand the <b>prescription</b> (処方箋) from the clinic to a pharmacy.","Give them your medication record book <b>お薬手帳</b> if you have one. If not, they'll make one.","The pharmacist explains how to take the medicine. It's fine to ask again."],
+  terms:["prescription","medication record book","after meals","three times a day","generic drug"],
+  tip:"A prescription must be brought to a pharmacy within 4 days, counting the issue date."},
+ m3:{title:"Emergency numbers",sum:"Ambulance 119, police 110",
+  steps:["<b>119</b>: ambulance and fire. Say 「救急です」 and give your address.","<b>110</b>: police, for accidents or theft.","For clinics open at night or on holidays, check the 休日当番医 (holiday duty doctor) page on your city website."],
+  terms:["ambulance","fire","holiday duty clinic"],
+  tip:"Save your address in Japanese in your phone's notes so you can read it out quickly."},
+ u1:{title:"Starting electricity",sum:"Apply online before moving in",
+  steps:["Check the notice in your room or ask the management company which power company serves the building.","Apply for 使用開始 (start of service) on the power company's website a few days before moving in.","After moving in, switch on the breaker (ブレーカー)."],
+  terms:["start of service","breaker","customer number"],
+  tip:"You can choose a power company, but starting with the regional one is simplest."},
+ u2:{title:"Turning on gas",sum:"Someone must be present, so book a time",
+  steps:["Ask the management company which gas company to use, then apply for 開栓 (opening) by phone or online.","For safety checks, gas requires <b>you to be present</b> (立ち会い). Book a time you'll be home.","City gas and propane (プロパン) are priced differently."],
+  terms:["gas opening","being present","city gas","propane"],
+  tip:"March and April are busy moving months, so apply early."},
+ u3:{title:"Starting water service",sum:"Contact the city waterworks bureau",
+  steps:["Apply through the city waterworks bureau (水道局) website or by phone.","Usually you can use water right away without anyone present.","Bills usually come once every two months."],
+  terms:["waterworks bureau","water bill"],
+  tip:"Sometimes an application postcard is left near the water meter."},
+ u4:{title:"Internet and mobile phone",sum:"Fiber installation takes weeks",
+  steps:["First ask the management company whether the building already has internet.","Fiber (光回線) can take 2 weeks to over a month from application to installation.","Meanwhile you can use a pocket Wi-Fi or a home router that needs no installation.","A phone contract needs your residence card and a payment method in your own name."],
+  terms:["fiber line","installation","pocket Wi-Fi","contract period"],
+  tip:"A contract longer than your stay can mean a cancellation fee. Check the contract period."},
+};
+const PHRASE_EN = {
+ hos:["Clinic",["This is my first visit. Where is reception?","I don't have an appointment. Can I be seen?","I've had a fever since three days ago.","My throat hurts and I'm coughing.","I have a stomachache.","I have a headache.","I'm allergic to some medicines.","I don't speak much Japanese. Could you speak slowly?","Could I get a medical certificate?"]],
+ pha:["Pharmacy",["Here is my prescription, please.","Generic medicine, please.","I don't have a medication record book.","How many times a day should I take it?","Will this medicine make me sleepy?","Where is the cold medicine?"]],
+ off:["City hall",["I'd like to file a moving-in notice.","I'd like to change the address on my residence card.","I'd like to join National Health Insurance.","I'd like to apply for the National Pension student deferral.","One copy of my certificate of residence, please.","Please tell me how to fill out this form."]],
+ gar:["Garbage & neighbors",["Please tell me how to put out garbage.","What day is burnable garbage?","I want to throw away a large item. What should I do?","I'm sorry for being noisy late at night."]],
+ uti:["Utilities & internet",["I'd like to start electricity service.","I'd like to book a time for the gas opening.","When can the internet installation be done?","I'm an international student. Can I sign a contract?"]],
+ emg:["Emergency",["It's an emergency (ambulance). My address is 〇〇. (119)","Please help me!","I lost my wallet.","I'm lost."]],
+};
+const POST_CAT_EN = {"전체":"All","쓰레기":"Garbage","구청·행정":"City hall","병원·약국":"Clinic & pharmacy","생활용품·쇼핑":"Shopping","집·통신":"Housing & phone","기타":"Other"};
+const GARB_EN = ["Burnable","Non-burnable","Cans · bottles · PET","Paper · cardboard","Plastic containers"];
+const DAYS_EN = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const UI = {
+ ko:{tabs:["홈","생활 정보","일본어 표현","커뮤니티","즐겨찾기"],langBtn:"English",homeH:"무엇이 궁금하세요?",homeLede:"한국어로 검색하면 생활 정보, 바로 쓸 수 있는 일본어 문장, 다른 유학생의 질문을 함께 찾아드려요.",ph:"예: 페트병, 전입신고, 열이 나요",search:"검색",hints:["쓰레기","재류카드","보험","병원","약국","인터넷","가스","귀국"],
+  results:(q,n)=>`“${q}” 검색 결과 ${n}건`,clear:"지우기",noRes:"찾는 정보가 없나요?",askC:"커뮤니티에 질문하기",lifeInfo:"생활 정보",phrases:"일본어 표현",community:"커뮤니티",
+  catsH:"생활 정보 카테고리",recent:"최근 질문",seeAll:"전체 보기",noPosts:"아직 질문이 없어요.",today:d=>`오늘(${d}) 버리는 날`,tomorrow:d=>`내일(${d}):`,nothing:"버리는 쓰레기가 없어요",setDays:"우리 동네 요일 설정",close:"닫기",
+  exampleSched:"지금은 예시 요일표예요. 우리 동네 쓰레기 달력에 맞게 바꿔 주세요. 이 기기에만 저장돼요.",kind:"종류",done:"완료",reset:"예시로 되돌리기",dayOf:(g,d)=>`${g} ${d}요일`,
+  infoH:"생활 정보",infoLede:"처음 일본에 와서 하게 되는 일들을 순서대로 정리했어요. 카드를 눌러 펼쳐 보세요.",all:"전체",bring:"준비물",jaTerms:"알아두면 좋은 일본어",
+  src:n=>`출처: ${n} 기준 일반 정보 · 업데이트 ${UPDATED}<br>세부 내용은 지역마다 다를 수 있으니 거주지 시청 안내를 함께 확인하세요.`,
+  phH:"일본어 표현 도우미",phLede:"상황을 고르고 문장을 복사하거나, 「크게 보여주기」로 화면을 직원에게 보여주세요.",copy:"복사",listen:"듣기",big:"크게 보여주기",
+  comH:"유학생 커뮤니티",comLede:"궁금한 걸 묻고, 겪어본 해결 방법을 나눠요.",ask:"질문하기",preview:"미리보기 모드예요. 지금 쓴 글은 이 화면에만 보이고 저장되지 않아요.",readonly:"이 링크는 읽기 전용이에요. 글을 쓰려면 공유한 사람에게 참여 권한을 요청하세요.",
+  postSearch:"게시글 검색",noMatch:"조건에 맞는 글이 없어요. 첫 질문을 남겨 보세요.",example:"예시 질문",anon:"익명",nick:"닉네임",nickPh:"예: 벳푸새내기",category:"카테고리",titleL:"제목",titlePh:"한 줄로 질문을 적어 주세요",bodyL:"내용",bodyPh:"상황을 자세히 적을수록 좋은 답변을 받을 수 있어요.",
+  pii:"주소, 전화번호, 이메일 같은 개인정보는 적지 마세요.",post:"올리기",cancel:"취소",back:"← 목록으로",gone:"삭제되었거나 찾을 수 없는 글이에요.",delPost:"글 삭제",answers:"답변",loading:"불러오는 중…",noAns:"아직 답변이 없어요. 경험을 나눠 주세요.",del:"삭제",
+  replyL:"답변",replyPh:"직접 해본 방법이나 공식 안내 링크를 알려 주세요.",reply:"답변 달기",favH:"즐겨찾기",favAcct:"내 계정에 저장돼요. 다른 사람에게는 보이지 않아요.",favLocal:"이 기기의 브라우저에 저장돼요.",favGroups:["생활 정보","일본어 표현","커뮤니티 글"],deleted:"삭제된 글이에요.",favEmpty:"별 모양 버튼을 누르면 자주 보는 정보와 문장이 여기에 모여요.",
+  favOn:"즐겨찾기 해제",favOff:"즐겨찾기",tFavAdd:"즐겨찾기에 추가했어요",tFavDel:"즐겨찾기에서 뺐어요",tCopied:"복사했어요",tSelected:"문장을 선택했어요. 복사해 주세요",tNoVoice:"이 기기에서는 음성을 쓸 수 없어요",
+  errPII:"전화번호, 이메일, 우편번호처럼 보이는 내용이 있어요. 개인정보를 지우고 다시 올려 주세요.",errFull:"저장 공간이 가득 찼어요. 관리자에게 알려 주세요.",errPost:"올리지 못했어요. 권한이 없거나 연결이 불안정해요. 잠시 후 다시 시도해 주세요.",errReply:"답변을 올리지 못했어요. 잠시 후 다시 시도해 주세요.",
+  tPosted:"질문을 올렸어요",tReplied:"답변을 달았어요",tPrev:" (미리보기)",tDelFail:"삭제하지 못했어요",tDeleted:"글을 삭제했어요",sure:"정말 삭제?",sure2:"한 번 더 누르면 삭제돼요",menu:"메뉴"},
+ en:{tabs:["Home","Life info","Japanese phrases","Community","Saved"],langBtn:"한국어",homeH:"What do you need help with?",homeLede:"Search in English or Korean to find life info, ready-to-use Japanese sentences, and questions from other students.",ph:"e.g. PET bottle, moving-in notice, fever",search:"Search",hints:["garbage","residence card","insurance","clinic","pharmacy","internet","gas","leaving Japan"],
+  results:(q,n)=>`${n} result${n===1?"":"s"} for “${q}”`,clear:"Clear",noRes:"Can't find it?",askC:"Ask the community",lifeInfo:"Life info",phrases:"Japanese phrases",community:"Community",
+  catsH:"Life info categories",recent:"Recent questions",seeAll:"See all",noPosts:"No questions yet.",today:d=>`Today (${d}): put out`,tomorrow:d=>`Tomorrow (${d}):`,nothing:"No collection",setDays:"Set my area's days",close:"Close",
+  exampleSched:"This is a sample schedule. Change it to match your area's garbage calendar. Saved on this device only.",kind:"Type",done:"Done",reset:"Reset to sample",dayOf:(g,d)=>`${g} on ${d}`,
+  infoH:"Life info",infoLede:"Step-by-step guides for the things you do when you first arrive in Japan. Tap a card to open it.",all:"All",bring:"What to bring",jaTerms:"Useful Japanese",
+  src:n=>`Source: general information based on ${n} · Updated ${UPDATED}<br>Details vary by area, so also check your own city office's guidance.`,
+  phH:"Japanese phrase helper",phLede:"Pick a situation, then copy a sentence or use “Show large” to show your screen to staff.",copy:"Copy",listen:"Listen",big:"Show large",
+  comH:"Student community",comLede:"Ask questions and share what worked for you.",ask:"Ask a question",preview:"Preview mode. Posts you write here appear only on this screen and aren't saved.",readonly:"This link is read-only. To post, ask the person who shared it for contributor access.",
+  postSearch:"Search posts",noMatch:"No posts match. Leave the first question.",example:"Sample",anon:"Anonymous",nick:"Nickname",nickPh:"e.g. NewInBeppu",category:"Category",titleL:"Title",titlePh:"Your question in one line",bodyL:"Details",bodyPh:"The more detail you give, the better the answers.",
+  pii:"Don't include personal info like your address, phone number or email.",post:"Post",cancel:"Cancel",back:"← Back to list",gone:"This post was deleted or can't be found.",delPost:"Delete post",answers:"Answers",loading:"Loading…",noAns:"No answers yet. Share your experience.",del:"Delete",
+  replyL:"Answer",replyPh:"Share what you tried, or a link to official guidance.",reply:"Post answer",favH:"Saved",favAcct:"Saved to your account. Nobody else can see it.",favLocal:"Saved in this device's browser.",favGroups:["Life info","Japanese phrases","Community posts"],deleted:"This post was deleted.",favEmpty:"Tap the star on any card to keep it here.",
+  favOn:"Remove from saved",favOff:"Save",tFavAdd:"Saved",tFavDel:"Removed from saved",tCopied:"Copied",tSelected:"Text selected. Copy it now",tNoVoice:"Voice isn't available on this device",
+  errPII:"This looks like it contains a phone number, email or postal code. Remove the personal info and try again.",errFull:"Storage is full. Please tell the page owner.",errPost:"Couldn't post. You may not have access, or the connection dropped. Try again shortly.",errReply:"Couldn't post your answer. Try again shortly.",
+  tPosted:"Question posted",tReplied:"Answer posted",tPrev:" (preview)",tDelFail:"Couldn't delete",tDeleted:"Post deleted",sure:"Delete?",sure2:"Tap again to delete",menu:"Menu"},
+};
+const DAYS = ["일","월","화","수","목","금","토"];
+const GARB = [["타는 쓰레기","燃えるごみ"],["안 타는 쓰레기","燃えないごみ"],["캔·병·페트병","缶・びん・ペット"],["종이·골판지","古紙"],["플라스틱 용기","プラ容器"]];
+const DEFAULT_SCHED = {"0":[2,5],"1":[3],"2":[3],"3":[1],"4":[4]}; // example
+
+/* ---------- state & storage ---------- */
+const ls = { get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}} };
+const S = {
+  view:"home", query:"", infoCat:"all", phraseSet:"hos", postCat:"전체", postSearch:"",
+  sched: ls.get("yh.sched",null), schedEditing:false,
+  favs: ls.get("yh.favs",{}),
+  posts: SAMPLE_POSTS.slice(), comments:{}, openPost:null, composing:false,
+  db:null, uid:null, canWrite:true, live:false, nickname: ls.get("yh.nick",""),
+  lang: ls.get("yh.lang",(navigator.language||"").toLowerCase().startsWith("en")?"en":"ko"),
+};
+let commentUnsub=null, favRef=null, favWriting=Promise.resolve();
+
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const STAR_D = "M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z";
+function star(key,title,sub){const on=!!S.favs[key];
+  const svg=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR_D}" ${on?'fill="currentColor"':'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"'}/></svg>`;
+  return `<button class="star" aria-pressed="${on}" aria-label="${on?T().favOn:T().favOff}" data-fav="${esc(key)}" data-ftitle="${esc(title)}" data-fsub="${esc(sub||"")}">${svg}</button>`}
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>el.hidden=true,1800)}
+function fmtDate(ms){const d=new Date(ms);return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`}
+function sched(){return S.sched||DEFAULT_SCHED}
+
+/* ---------- search ---------- */
+function match(hay,q){const h=hay.toLowerCase();return q.toLowerCase().split(/\s+/).filter(Boolean).every(t=>h.includes(t))}
+function searchAll(q){
+  return {
+    info: INFO.filter(i=>{const e=INFO_EN[i.id];return match([i.title,i.sum,i.tags,i.steps.join(" "),(i.terms||[]).flat().join(" "),CATS[i.cat].ko,e.title,e.sum,e.steps.join(" "),e.terms.join(" "),(e.bring||[]).join(" "),CATS_EN[i.cat].join(" ")].join(" ").replace(/<[^>]+>/g,""),q)}),
+    phrases: PHRASES.filter(p=>match([p.ja,p.kana,p.ko,p.setKo,PHRASE_EN[p.set][0],PHRASE_EN[p.set][1][+p.id.slice(3)]].join(" "),q)),
+    posts: S.posts.filter(p=>match([p.title,p.body,p.category].join(" "),q)),
+  };
+}
+
+/* ---------- language helpers ---------- */
+const T = ()=>UI[S.lang];
+const EN = ()=>S.lang==="en";
+const catName = k=>EN()?CATS_EN[k][0]:CATS[k].ko;
+const catDesc = k=>EN()?CATS_EN[k][1]:CATS[k].desc;
+const dayName = d=>EN()?DAYS_EN[d]:DAYS[d];
+const garbName = i=>EN()?GARB_EN[i]:GARB[i][0];
+const postCat = c=>EN()?(POST_CAT_EN[c]||c):c;
+const phraseMean = p=>EN()?PHRASE_EN[p.set][1][+p.id.slice(3)]:p.ko;
+const setName = s=>EN()?PHRASE_EN[s.id][0]:s.ko;
+function L(i){
+  if(!EN()) return {title:i.title,sum:i.sum,steps:i.steps,bring:i.bring,tip:i.tip,terms:i.terms,src:OFFICIAL[i.src]};
+  const e=INFO_EN[i.id];
+  return {title:e.title,sum:e.sum,steps:e.steps,bring:e.bring,tip:e.tip,terms:i.terms.map((t,k)=>[t[0],e.terms[k]]),src:OFFICIAL_EN[i.src]};
+}
+function applyChrome(){
+  document.documentElement.lang=S.lang;
+  const t=T();
+  document.querySelectorAll("#tabs button[data-v]").forEach((b,k)=>b.textContent=t.tabs[k]);
+  $("#tabs").setAttribute("aria-label",t.menu);
+  $("#langBtn").textContent=t.langBtn;
+}
+
+/* ---------- renderers ---------- */
+function infoCard(i,open){
+  const x=L(i),t=T();
+  return `<details class="info" ${open?"open":""}><summary><div class="sumtext"><span class="catlabel">${catName(i.cat)}</span><h3>${esc(x.title)}</h3><p>${esc(x.sum)}</p></div>${star("info:"+i.id,x.title,catName(i.cat))}</summary>
+  <div class="body"><ol>${x.steps.map(s=>`<li>${s}</li>`).join("")}</ol>
+  ${x.bring?`<div><div class="eyebrow">${t.bring}</div><ul>${x.bring.map(b=>`<li>${esc(b)}</li>`).join("")}</ul></div>`:""}
+  <div><div class="eyebrow">${t.jaTerms}</div><div class="terms">${x.terms.map(m=>`<span class="term"><span class="ja" lang="ja">${esc(m[0])}</span> · ${esc(m[1])}</span>`).join("")}</div></div>
+  ${x.tip?`<div class="notice">${esc(x.tip)}</div>`:""}
+  <div class="src">${t.src(x.src)}</div></div></details>`;
+}
+function phraseCard(p){
+  const t=T();
+  return `<div class="phrase"><div class="ja big" lang="ja">${esc(p.ja)}</div><div class="kana" lang="ja">${esc(p.kana)}</div><div class="ko">${esc(phraseMean(p))}</div>
+  <div class="actions"><button class="btn primary" data-copy="${esc(p.ja)}">${t.copy}</button>${"speechSynthesis" in window?`<button class="btn" data-speak="${esc(p.ja)}">${t.listen}</button>`:""}<button class="btn" data-big="${esc(p.id)}">${t.big}</button>${star("phrase:"+p.id,p.ja,phraseMean(p))}</div></div>`;
+}
+function postRow(p){
+  const t=T();
+  return `<div style="display:flex;gap:8px;align-items:flex-start"><button class="post" data-open="${esc(p.id)}"><div style="flex:1;min-width:0"><h3>${esc(p.title)}</h3><p>${esc(p.body)}</p>
+  <div class="meta"><span class="badge">${esc(postCat(p.category))}</span>${p.example?`<span class="badge">${t.example}</span>`:""}<span>${esc(p.nickname||t.anon)}</span><span>${fmtDate(p.createdAt)}</span></div></div></button>${star("post:"+p.id,p.title,p.category)}</div>`;
+}
+function todayPanel(){
+  const t=T(),sc=sched(), d=new Date().getDay(), tm=(d+1)%7;
+  const on=day=>GARB.map((g,i)=>(sc[i]||[]).includes(day)?i:null).filter(x=>x!==null);
+  const tag=list=>list.length?list.map(i=>`<span class="tag">${garbName(i)}</span>`).join(""):`<span class="none">${t.nothing}</span>`;
+  let edit="";
+  if(S.schedEditing){
+    edit=`<div class="sched"><table><thead><tr><th>${t.kind}</th>${DAYS.map((_,di)=>`<th>${dayName(di)}</th>`).join("")}</tr></thead><tbody>${GARB.map((g,i)=>`<tr><td>${garbName(i)}</td>${DAYS.map((_,di)=>`<td><input type="checkbox" id="sc-${i}-${di}" data-sc="${i}" data-day="${di}" ${(sc[i]||[]).includes(di)?"checked":""} aria-label="${t.dayOf(garbName(i),dayName(di))}"></td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    <div class="actions"><button class="btn primary" data-act="sched-done">${t.done}</button><button class="btn" data-act="sched-reset">${t.reset}</button></div>`;
+  }
+  return `<div class="today"><div class="sechead"><h3>${t.today(dayName(d))}</h3><button class="linkbtn" data-act="sched-edit">${S.schedEditing?t.close:t.setDays}</button></div>
+  <div class="row">${tag(on(d))}</div><div class="row"><span class="none">${t.tomorrow(dayName(tm))}</span>${tag(on(tm))}</div>
+  ${S.sched?"":`<span class="none">${t.exampleSched}</span>`}${edit}</div>`;
+}
+
+function renderHome(){
+  const t=T(),q=S.query.trim();
+  let results="";
+  if(q){
+    const r=searchAll(q);const n=r.info.length+r.phrases.length+r.posts.length;
+    results=`<div class="sechead"><h2 class="sec">${esc(t.results(q,n))}</h2><button class="linkbtn" data-act="clear">${t.clear}</button></div>
+    ${n?"":`<div class="empty">${t.noRes} <button class="linkbtn" data-act="ask">${t.askC}</button></div>`}
+    ${r.info.length?`<div class="list"><div class="eyebrow">${t.lifeInfo}</div>${r.info.map(i=>infoCard(i,r.info.length<=2)).join("")}</div>`:""}
+    ${r.phrases.length?`<div class="list"><div class="eyebrow">${t.phrases}</div>${r.phrases.slice(0,8).map(phraseCard).join("")}</div>`:""}
+    ${r.posts.length?`<div class="list"><div class="eyebrow">${t.community}</div>${r.posts.slice(0,6).map(postRow).join("")}</div>`:""}`;
+  }
+  return `<section class="view"><div><h2 style="font-size:24px">${t.homeH}</h2><p class="lede">${t.homeLede}</p></div>
+  <form class="search" id="homeSearch" role="search"><input id="q" type="search" placeholder="${esc(t.ph)}" value="${esc(S.query)}" aria-label="${t.search}"><button type="submit">${t.search}</button></form>
+  <div class="hints">${t.hints.map(h=>`<button class="chip" data-hint="${esc(h)}">${esc(h)}</button>`).join("")}</div>
+  ${results}
+  ${q?"":`${todayPanel()}
+  <div class="list"><h2 class="sec">${t.catsH}</h2><div class="cats">${Object.entries(CATS).map(([k,c])=>`<button class="cat" data-cat="${k}"><b>${catName(k)}</b><span class="ja" lang="ja">${c.ja}</span><small>${catDesc(k)}</small></button>`).join("")}</div></div>
+  <div class="list"><div class="sechead"><h2 class="sec">${t.recent}</h2><button class="linkbtn" data-go="community">${t.seeAll}</button></div>${S.posts.slice(0,3).map(postRow).join("")||`<div class="empty">${t.noPosts}</div>`}</div>`}
+  </section>`;
+}
+function renderInfo(){
+  const t=T(),list=INFO.filter(i=>S.infoCat==="all"||i.cat===S.infoCat);
+  return `<section class="view"><div><h2 style="font-size:22px">${t.infoH}</h2><p class="lede">${t.infoLede}</p></div>
+  <div class="hints"><button class="chip" data-icat="all" aria-pressed="${S.infoCat==="all"}">${t.all}</button>${Object.keys(CATS).map(k=>`<button class="chip" data-icat="${k}" aria-pressed="${S.infoCat===k}">${catName(k)}</button>`).join("")}</div>
+  <div class="list">${list.map(i=>infoCard(i,false)).join("")}</div></section>`;
+}
+function renderPhrases(){
+  const t=T(),set=PHRASE_SETS.find(s=>s.id===S.phraseSet);
+  return `<section class="view"><div><h2 style="font-size:22px">${t.phH}</h2><p class="lede">${t.phLede}</p></div>
+  <div class="hints">${PHRASE_SETS.map(s=>`<button class="chip" data-pset="${s.id}" aria-pressed="${S.phraseSet===s.id}">${setName(s)}</button>`).join("")}</div>
+  <div class="list">${PHRASES.filter(p=>p.set===set.id).map(phraseCard).join("")}</div></section>`;
+}
+function renderCommunity(){
+  if(S.openPost) return renderThread();
+  const t=T(),q=S.postSearch.trim();
+  const list=S.posts.filter(p=>(S.postCat==="전체"||p.category===S.postCat)&&(!q||match(p.title+" "+p.body,q)));
+  const mode=S.live?"":`<div class="notice">${t.preview}</div>`;
+  const ro=S.live&&!S.canWrite?`<div class="notice">${t.readonly}</div>`:"";
+  return `<section class="view"><div class="sechead"><div><h2 style="font-size:22px">${t.comH}</h2><p class="lede">${t.comLede}</p></div>
+  ${S.canWrite&&!S.composing?`<button class="btn primary" data-act="compose">${t.ask}</button>`:""}</div>${mode}${ro}
+  ${S.composing?composeForm():""}
+  <form class="search" id="postSearch" role="search"><input id="pq" type="search" placeholder="${t.postSearch}" value="${esc(S.postSearch)}" aria-label="${t.postSearch}"><button type="submit">${t.search}</button></form>
+  <div class="hints">${["전체",...POST_CATS].map(c=>`<button class="chip" data-pcat="${c}" aria-pressed="${S.postCat===c}">${postCat(c)}</button>`).join("")}</div>
+  <div class="list">${list.map(postRow).join("")||`<div class="empty">${t.noMatch}</div>`}</div></section>`;
+}
+function composeForm(){
+  const t=T();
+  return `<form class="card" id="compose"><div class="frow"><label class="f">${t.nick}<input id="c-nick" maxlength="20" required value="${esc(S.nickname)}" placeholder="${t.nickPh}"></label>
+  <label class="f">${t.category}<select id="c-cat">${POST_CATS.map(c=>`<option value="${c}">${postCat(c)}</option>`).join("")}</select></label></div>
+  <label class="f">${t.titleL}<input id="c-title" maxlength="80" required placeholder="${t.titlePh}"></label>
+  <label class="f">${t.bodyL}<textarea id="c-body" maxlength="2000" required placeholder="${t.bodyPh}"></textarea></label>
+  <p class="notice" style="margin:0">${t.pii}</p><p class="err" id="c-err" hidden></p>
+  <div class="actions"><button class="btn primary" type="submit">${t.post}</button><button class="btn" type="button" data-act="cancel-compose">${t.cancel}</button></div></form>`;
+}
+function renderThread(){
+  const t=T(),p=S.posts.find(x=>x.id===S.openPost);
+  if(!p) return `<section class="view"><button class="linkbtn" data-act="back">${t.back}</button><div class="empty">${t.gone}</div></section>`;
+  const cs=S.comments[p.id];
+  const mine=S.uid&&p.authorId===S.uid || (!S.live&&p.authorId==="local");
+  return `<section class="view"><button class="linkbtn" data-act="back" style="align-self:flex-start">${t.back}</button>
+  <article class="thread"><div class="meta" style="margin:0"><span class="badge">${esc(postCat(p.category))}</span>${p.example?`<span class="badge">${t.example}</span>`:""}<span>${esc(p.nickname||t.anon)}</span><span>${fmtDate(p.createdAt)}</span></div>
+  <div style="display:flex;gap:8px;align-items:flex-start"><h2 style="flex:1">${esc(p.title)}</h2>${star("post:"+p.id,p.title,p.category)}</div>
+  <div class="text">${esc(p.body)}</div>${mine?`<div class="actions"><button class="btn danger" data-act="del-post">${t.delPost}</button></div>`:""}</article>
+  <div class="list"><h2 class="sec">${t.answers} ${cs?cs.length:""}</h2>
+  ${cs===undefined?`<div class="empty">${t.loading}</div>`:cs.length?`<div class="thread">${cs.map(c=>`<div class="comment"><div class="meta" style="margin:0 0 4px"><b style="color:var(--ink)">${esc(c.nickname||t.anon)}</b><span>${fmtDate(c.createdAt)}</span>${(S.uid&&c.authorId===S.uid)||(!S.live&&c.authorId==="local")?`<button class="linkbtn" style="font-size:12px" data-delc="${esc(c.id)}">${t.del}</button>`:""}</div><div class="text">${esc(c.text)}</div></div>`).join("")}</div>`:`<div class="empty">${t.noAns}</div>`}
+  ${S.canWrite?`<form class="card" id="reply"><div class="frow"><label class="f">${t.nick}<input id="r-nick" maxlength="20" required value="${esc(S.nickname)}"></label><span></span></div>
+  <label class="f">${t.replyL}<textarea id="r-text" maxlength="2000" required placeholder="${t.replyPh}"></textarea></label><p class="err" id="r-err" hidden></p>
+  <div class="actions"><button class="btn primary" type="submit">${t.reply}</button></div></form>`:""}</div></section>`;
+}
+function renderFavs(){
+  const t=T(),items=Object.entries(S.favs).sort((a,b)=>b[1].at-a[1].at);
+  const groups=["info","phrase","post"];
+  const body=items.length?groups.map((g,gi)=>{
+    const list=items.filter(([k])=>k.startsWith(g+":"));if(!list.length)return"";
+    return `<div class="list"><div class="eyebrow">${t.favGroups[gi]}</div>${list.map(([k,v])=>{
+      const id=k.slice(g.length+1);
+      if(g==="info"){const i=INFO.find(x=>x.id===id);return i?infoCard(i,false):""}
+      if(g==="phrase"){const p=PHRASES.find(x=>x.id===id);return p?phraseCard(p):""}
+      const p=S.posts.find(x=>x.id===id);
+      return p?postRow(p):`<div class="phrase"><b>${esc(v.title)}</b><span style="color:var(--muted);font-size:13px">${t.deleted}</span><div class="actions">${star(k,v.title,v.sub)}</div></div>`;
+    }).join("")}</div>`}).join("")
+    :`<div class="empty">${t.favEmpty}</div>`;
+  return `<section class="view"><div><h2 style="font-size:22px">${t.favH}</h2><p class="lede">${S.live&&S.uid?t.favAcct:t.favLocal}</p></div>${body}</section>`;
+}
+function render(){
+  applyChrome();
+  document.querySelectorAll("#tabs button[data-v]").forEach(b=>b.setAttribute("aria-current",b.dataset.v===S.view?"page":"false"));
+  const R={home:renderHome,info:renderInfo,phrases:renderPhrases,community:renderCommunity,favorites:renderFavs}[S.view];
+  $("#main").innerHTML=R();
+}
+function go(v){S.view=v;if(v!=="community")closePost();try{history.replaceState(null,"","#"+v)}catch(e){}render();window.scrollTo(0,0)}
+
+/* ---------- favorites ---------- */
+function toggleFav(key,title,sub){
+  if(S.favs[key]) delete S.favs[key]; else S.favs[key]={title,sub,at:Date.now()};
+  toast(S.favs[key]?T().tFavAdd:T().tFavDel);
+  saveFavs(); render();
+}
+function saveFavs(){
+  ls.set("yh.favs",S.favs);
+  if(favRef){const snap=JSON.parse(JSON.stringify(S.favs));favWriting=favWriting.then(()=>favRef.set({items:snap})).catch(()=>{})}
+}
+
+/* ---------- community actions ---------- */
+const PII=[/0\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}/,/[\w.+-]+@[\w-]+\.[\w.]+/,/\d{3}-\d{4}/];
+function hasPII(t){return PII.some(r=>r.test(t))}
+async function submitPost(){
+  const nick=$("#c-nick").value.trim(),title=$("#c-title").value.trim(),body=$("#c-body").value.trim(),cat=$("#c-cat").value,err=$("#c-err");
+  if(hasPII(title+" "+body)){err.textContent=T().errPII;err.hidden=false;return}
+  S.nickname=nick;ls.set("yh.nick",nick);
+  const doc={title,body,category:cat,nickname:nick,authorId:S.uid||"local",createdAt:Date.now()};
+  if(S.live){
+    try{await S.db.collection("posts").add(doc);S.composing=false;toast(T().tPosted);render()}
+    catch(e){err.textContent=e&&e.code==="quota_exceeded"?T().errFull:T().errPost;err.hidden=false;if(e&&e.code==="invalid_argument"){S.canWrite=false}}
+  }else{S.posts.unshift({...doc,id:"l"+Date.now()});S.composing=false;toast(T().tPosted+T().tPrev);render()}
+}
+async function submitReply(){
+  const nick=$("#r-nick").value.trim(),text=$("#r-text").value.trim(),err=$("#r-err"),pid=S.openPost;
+  if(hasPII(text)){err.textContent=T().errPII;err.hidden=false;return}
+  S.nickname=nick;ls.set("yh.nick",nick);
+  const c={text,nickname:nick,authorId:S.uid||"local",createdAt:Date.now()};
+  if(S.live){try{await S.db.collection("posts/"+pid+"/comments").add(c);toast(T().tReplied)}catch(e){err.textContent=T().errReply;err.hidden=false}}
+  else{(S.comments[pid]=S.comments[pid]||[]).push({...c,id:"lc"+Date.now()});toast(T().tReplied+T().tPrev);render()}
+}
+function openPost(id){
+  S.openPost=id;S.view="community";
+  if(S.live){
+    S.comments[id]=undefined;
+    if(commentUnsub)commentUnsub();
+    commentUnsub=S.db.collection("posts/"+id+"/comments").orderBy("createdAt","asc").limit(300).onSnapshot(
+      snap=>{S.comments[id]=snap.docs.map(d=>({id:d.id,...d.data()}));if(S.openPost===id)render()},
+      ()=>{S.comments[id]=[];render()});
+  }else if(!S.comments[id])S.comments[id]=[];
+  render();window.scrollTo(0,0);
+}
+function closePost(){S.openPost=null;if(commentUnsub){commentUnsub();commentUnsub=null}}
+
+/* ---------- events ---------- */
+$("#langBtn").addEventListener("click",()=>{S.lang=EN()?"ko":"en";ls.set("yh.lang",S.lang);S.query="";render()});
+$("#tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-v]");if(b)go(b.dataset.v)});
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button");if(!t)return;
+  const d=t.dataset;
+  if(d.fav){e.preventDefault();e.stopPropagation();toggleFav(d.fav,d.ftitle,d.fsub);return}
+  if(d.copy){try{await navigator.clipboard.writeText(d.copy);toast(T().tCopied)}catch(err){const r=document.createRange();const el=t.closest(".phrase").querySelector(".ja");r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);toast(T().tSelected)}return}
+  if(d.speak){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(d.speak);u.lang="ja-JP";u.rate=.85;speechSynthesis.speak(u)}catch(err){toast(T().tNoVoice)}return}
+  if(d.big){const p=PHRASES.find(x=>x.id===d.big);const el=$("#showbig");el.innerHTML=`<div class="ja" lang="ja">${esc(p.ja)}</div><p>${esc(phraseMean(p))}</p><button class="btn" data-act="close-big" style="align-self:flex-start">${T().close}</button>`;el.hidden=false;return}
+  if(d.hint){S.query=d.hint;render();return}
+  if(d.cat){S.infoCat=d.cat;go("info");return}
+  if(d.go){go(d.go);return}
+  if(d.icat){S.infoCat=d.icat;render();return}
+  if(d.pset){S.phraseSet=d.pset;render();return}
+  if(d.pcat){S.postCat=d.pcat;render();return}
+  if(d.open){openPost(d.open);return}
+  if(d.delc){if(t.dataset.confirm!=="1"){t.dataset.confirm="1";t.textContent=T().sure;return}
+    if(S.live){try{await S.db.doc("posts/"+S.openPost+"/comments/"+d.delc).delete()}catch(err){toast(T().tDelFail)}}
+    else{S.comments[S.openPost]=S.comments[S.openPost].filter(c=>c.id!==d.delc);render()}return}
+  switch(d.act){
+    case"clear":S.query="";render();break;
+    case"ask":S.composing=true;go("community");break;
+    case"compose":S.composing=true;render();break;
+    case"cancel-compose":S.composing=false;render();break;
+    case"back":closePost();render();break;
+    case"close-big":$("#showbig").hidden=true;break;
+    case"sched-edit":S.schedEditing=!S.schedEditing;render();break;
+    case"sched-done":S.schedEditing=false;render();break;
+    case"sched-reset":S.sched=null;try{localStorage.removeItem("yh.sched")}catch(err){}render();break;
+    case"del-post":
+      if(t.dataset.confirm!=="1"){t.dataset.confirm="1";t.textContent=T().sure2;return}
+      if(S.live){try{await S.db.doc("posts/"+S.openPost).delete();closePost();toast(T().tDeleted);render()}catch(err){toast(T().tDelFail)}}
+      else{S.posts=S.posts.filter(p=>p.id!==S.openPost);closePost();render()}break;
+  }
+});
+document.addEventListener("change",e=>{
+  const c=e.target;if(c.dataset&&c.dataset.sc!==undefined){
+    const s=JSON.parse(JSON.stringify(sched())),i=c.dataset.sc,day=+c.dataset.day;
+    s[i]=(s[i]||[]).filter(x=>x!==day);if(c.checked)s[i].push(day);
+    S.sched=s;ls.set("yh.sched",s);render();
+    const again=document.getElementById(c.id);if(again)again.focus();
+  }
+});
+document.addEventListener("submit",e=>{
+  e.preventDefault();
+  if(e.target.id==="homeSearch"){S.query=$("#q").value;render()}
+  else if(e.target.id==="postSearch"){S.postSearch=$("#pq").value;render()}
+  else if(e.target.id==="compose")submitPost();
+  else if(e.target.id==="reply")submitReply();
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#showbig").hidden=true});
+
+/* ---------- boot ---------- */
+const h=(location.hash||"").slice(1);if(["home","info","phrases","community","favorites"].includes(h))S.view=h;
+render();
+
+(async()=>{
+  if(!window.claude||!window.claude.use)return;
+  const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
+  if(!db)return;
+  S.db=db;S.live=true;S.posts=[];
+  if(user){
+    try{S.uid=await user.id()}catch(e){}
+    try{const w=await user.can("data.write");if(w===false)S.canWrite=false}catch(e){}
+  }
+  db.collection("posts").orderBy("createdAt","desc").limit(300).onSnapshot(
+    snap=>{S.posts=snap.docs.map(d=>({id:d.id,...d.data()}));if(document.activeElement&&/^(c-|r-|q|pq)/.test(document.activeElement.id))return;render()},
+    ()=>{});
+  if(S.uid){
+    favRef=db.doc("data/users/"+S.uid+"/favorites");
+    try{const snap=await favRef.get();
+      if(snap.exists){S.favs={...(snap.data().items||{})};ls.set("yh.favs",S.favs)}
+      else if(Object.keys(S.favs).length){saveFavs()}
+    }catch(e){}
+  }
+  render();
+})();
+</script>
+
+</body>
+</html>
